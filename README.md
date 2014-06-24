@@ -11,6 +11,11 @@ External Lib
 * Twig by SensioLabs.
 * Timthumb by Ben Gillbanks.
 
+Install
+-------
+Import quaver.sql and check config.php
+
+
 Documentation
 -------------
 Coming soon...
