@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Servidor: localhost:8889
--- Tiempo de generación: 24-06-2014 a las 16:20:50
+-- Tiempo de generación: 24-06-2014 a las 16:39:13
 -- Versión del servidor: 5.5.34
 -- Versión de PHP: 5.5.10
 
@@ -107,11 +107,7 @@ CREATE TABLE `user` (
   `salt` varchar(8) NOT NULL DEFAULT '',
   `name` varchar(255) NOT NULL DEFAULT '',
   `surname` varchar(255) NOT NULL DEFAULT '',
-  `phone` varchar(16) DEFAULT '',
-  `id_number` varchar(16) DEFAULT '',
   `avatar` varchar(255) DEFAULT NULL,
-  `address` varchar(255) DEFAULT NULL,
-  `city` varchar(32) DEFAULT NULL,
   `timezone` varchar(32) NOT NULL DEFAULT '',
   `biography` text,
   `registered` int(11) NOT NULL,
