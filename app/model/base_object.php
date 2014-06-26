@@ -10,122 +10,114 @@
  */
 class base_object extends core {
 
-    public function __construct(){
-
-    }
-
     public $id;
 
     /**
-     * get function.
-     * 
-     * @access public
-     * @param mixed $key
-     * @return void
+     *
+     */
+    public function __construct(){
+        //none
+    }
+
+    /**
+     * @param $key
+     * @return mixed
      */
     public function get($key) {
         return $this->$$key;
     }
 
     /**
-     * set function.
-     * 
-     * @access public
-     * @param mixed $key
-     * @param mixed $value
-     * @return void
+     * @param $key
+     * @param $value
      */
     public function set($key, $value) {
         $this->$$key = $value;
     }
 
     /**
-     * save function.
-     * 
-     * @access public
-     * @return void
-     */
-    public function save() {
-        $db = new DB;
-
-        $item = $this->getItem();
-
-        if (!empty($this->id)) {
-            // UPDATE
-            $return = $db->conn->update($item, $this->table, "id = '" . $this->id . "'");
-        } else {
-            // INSERT
-            $return = $db->conn->insert($item, $this->table);
-            $this->id = $db->conn->getLastId();
-            $this->getFromId($this->id);
-        }
-        return $return;
-    }
-
-    /**
-     * getFromId function.
-     * 
-     * @access public
-     * @param mixed $_id
-     * @return void
+     * @param $_id
      */
     public function getFromId($_id) {
-        $db = new DB;
-        
-        $_id = (int)$_id;
 
-        $item = $db->conn->getArray("SELECT * FROM " . $this->table . " WHERE id = '$_id'");
-        if (@$item) {
-            $this->setItem($item[0]);
+        try {
+
+            $db = new DB;
+            $_id = (int)$_id;
+
+            $item = $db->query("SELECT * FROM " . $this->table . " WHERE id = '$_id'");
+
+            $result = $item->fetchAll();
+
+            if ($result) {
+                $this->setItem($result[0]);
+            }
+
+        } catch (PDOException $e) {
+            print "Error!: " . $e->getMessage() . "<br/>";
+            die();
         }
 
-        return $this;
     }
-    
+
     /**
-     * delete function.
-     * 
-     * @access public
-     * @return void
+     * @return bool
+     */
+    public function save() {
+
+        try {
+
+            $db = new DB;
+
+            $set = '';
+            $values = array();
+
+            foreach ($this->_fields as $field) {
+                if ($set != '') $set .= ', ';
+                $set .= "$field = :$field";
+                $values[":$field"] = $this->$field;
+            }
+
+            if(empty($this->id)){
+                $sql = "INSERT INTO " . $this->table . " SET " . $set;
+
+            } else {
+                $values[':id'] = $this->id;
+                $sql = "UPDATE " . $this->table . " SET " . $set . " WHERE id = :id";
+            }
+
+            $db->query($sql, $values);
+
+            return true;
+
+        } catch (PDOException $e) {
+            print "Error!: " . $e->getMessage() . "<br/>";
+            die();
+        }
+
+
+    }
+
+
+    /**
+     * @return bool
      */
     public function delete() {
         $db = new DB;
 
-        $return = false;
+        $_id = (int)$this->id;
 
-        if (!empty($this->id)) {
-            $return = $db->conn->delete($this->id, $this->table);
+        $sql = "DELETE FROM " . $this->table . " WHERE id = :id";
+        if ($db->query($sql, array(':id'=>$_id))) {
+            return true;
+        } else {
+            return false;
         }
-        
-        return $return;
     }
 
-    /**
-     * getList function.
-     * 
-     * @access public
-     * @return void
-     */
-    public function getList() {
-        $db = new DB;
-
-        $return = array();
-
-        $items = $db->conn->getArray("SELECT id FROM " . $this->table . "");
-        if (@$items)
-            foreach ($items as $item) {
-                $return[] = $db->loadClass($this->table)->getFromId($item['id']);
-            }
-
-        return @$return;
-    }
 
     /**
-     * setItem function.
-     * 
-     * @access public
-     * @param mixed $_item
-     * @return void
+     * @param $_item
      */
     public function setItem($_item) {
         foreach ($this->_fields as $field) {
@@ -134,11 +126,9 @@ class base_object extends core {
         }
     }
 
+
     /**
-     * getItem function.
-     * 
-     * @access public
-     * @return void
+     * @return array
      */
     public function getItem() {
         $item = array();
@@ -148,11 +138,9 @@ class base_object extends core {
         return $item;
     }
 
+
     /**
-     * toArray function.
-     * 
-     * @access public
-     * @return void
+     * @return bool
      */
     public function toArray() {
         $return = false;
@@ -172,11 +160,9 @@ class base_object extends core {
         return $return;
     }
 
+
     /**
-     * toJson function.
-     * 
-     * @access public
-     * @return void
+     * @return string
      */
     public function toJson() {
         $return = $this->toArray();
@@ -184,11 +170,9 @@ class base_object extends core {
         return json_encode($return);
     }
 
+
     /**
-     * toTwig function.
-     * 
-     * @access public
-     * @return void
+     * @return bool
      */
     public function toTwig() {
         if (method_exists($this, "twigify"))
@@ -199,13 +183,10 @@ class base_object extends core {
         return $return;
     }
 
-	
+
     /**
-     * format function.
-     * 
-     * @access public
-     * @param mixed $_format
-     * @return void
+     * @param $_format
+     * @return $this|bool|string
      */
     public function format($_format) {
         switch ($_format) {
@@ -223,89 +204,7 @@ class base_object extends core {
                 break;
         }
     }
-    /*
-     * Security
-     */
 
-    public static function cleanInt($s) {
-
-        $s= str_replace('"','', $s);
-        $s= str_replace(':','', $s);
-        $s= str_replace('.','', $s);
-        $s= str_replace(',','', $s);
-        $s= str_replace(';','', $s);
-        return $s;
-
-    }
-
-    public static function cleanString($_str) {
-        // Change characteres...
-        $i = array('À', 'Á', 'Â', 'Ã', 'Ä', 'Å', 'Æ', 'Ç', 'È', 'É', 'Ê', 'Ë', 'Ì', 'Í',
-            'Î', 'Ï', 'Ð', 'Ñ', 'Ò', 'Ó', 'Ô', 'Õ', 'Ö', 'Ø', 'Ù', 'Ú', 'Û', 'Ü', 'Ý', 'ß',
-            'à', 'á', 'â', 'ã', 'ä', 'å', 'æ', 'ç', 'è', 'é', 'ê', 'ë', 'ì', 'í', 'î', 'ï',
-            'ñ', 'ò', 'ó', 'ô', 'õ', 'ö', 'ø', 'ù', 'ú', 'û', 'ü', 'ý', 'ÿ', 'Ā', 'ā', 'Ă',
-            'ă', 'Ą', 'ą', 'Ć', 'ć', 'Ĉ', 'ĉ', 'Ċ', 'ċ', 'Č', 'č', 'Ď', 'ď', 'Đ', 'đ', 'Ē',
-            'ē', 'Ĕ', 'ĕ', 'Ė', 'ė', 'Ę', 'ę', 'Ě', 'ě', 'Ĝ', 'ĝ', 'Ğ', 'ğ', 'Ġ', 'ġ', 'Ģ',
-            'ģ', 'Ĥ', 'ĥ', 'Ħ', 'ħ', 'Ĩ', 'ĩ', 'Ī', 'ī', 'Ĭ', 'ĭ', 'Į', 'į', 'İ', 'ı', 'Ĳ',
-            'ĳ', 'Ĵ', 'ĵ', 'Ķ', 'ķ', 'Ĺ', 'ĺ', 'Ļ', 'ļ', 'Ľ', 'ľ', 'Ŀ', 'ŀ', 'Ł', 'ł', 'Ń',
-            'ń', 'Ņ', 'ņ', 'Ň', 'ň', 'ŉ', 'Ō', 'ō', 'Ŏ', 'ŏ', 'Ő', 'ő', 'Œ', 'œ', 'Ŕ', 'ŕ',
-            'Ŗ', 'ŗ', 'Ř', 'ř', 'Ś', 'ś', 'Ŝ', 'ŝ', 'Ş', 'ş', 'Š', 'š', 'Ţ', 'ţ', 'Ť', 'ť',
-            'Ŧ', 'ŧ', 'Ũ', 'ũ', 'Ū', 'ū', 'Ŭ', 'ŭ', 'Ů', 'ů', 'Ű', 'ű', 'Ų', 'ų', 'Ŵ', 'ŵ',
-            'Ŷ', 'ŷ', 'Ÿ', 'Ź', 'ź', 'Ż', 'ż', 'Ž', 'ž', 'ſ', 'ƒ', 'Ơ', 'ơ', 'Ư', 'ư', 'Ǎ',
-            'ǎ', 'Ǐ', 'ǐ', 'Ǒ', 'ǒ', 'Ǔ', 'ǔ', 'Ǖ', 'ǖ', 'Ǘ', 'ǘ', 'Ǚ', 'ǚ', 'Ǜ', 'ǜ', 'Ǻ',
-            'ǻ', 'Ǽ', 'ǽ', 'Ǿ', 'ǿ', '!', '?', '\\', '.', '&', ',', ':', '(', ')', ';', '^', '¡', '¿', '//', '"', '@');
-        // ...in this other...
-        $o = array('A', 'A', 'A', 'A', 'A', 'A', 'AE', 'C', 'E', 'E', 'E', 'E', 'I', 'I',
-            'I', 'I', 'D', 'N', 'O', 'O', 'O', 'O', 'O', 'O', 'U', 'U', 'U', 'U', 'Y', 's',
-            'a', 'a', 'a', 'a', 'a', 'a', 'ae', 'c', 'e', 'e', 'e', 'e', 'i', 'i', 'i', 'i',
-            'n', 'o', 'o', 'o', 'o', 'o', 'o', 'u', 'u', 'u', 'u', 'y', 'y', 'A', 'a', 'A',
-            'a', 'A', 'a', 'C', 'c', 'C', 'c', 'C', 'c', 'C', 'c', 'D', 'd', 'D', 'd', 'E',
-            'e', 'E', 'e', 'E', 'e', 'E', 'e', 'E', 'e', 'G', 'g', 'G', 'g', 'G', 'g', 'G',
-            'g', 'H', 'h', 'H', 'h', 'I', 'i', 'I', 'i', 'I', 'i', 'I', 'i', 'I', 'i', 'IJ',
-            'ij', 'J', 'j', 'K', 'k', 'L', 'l', 'L', 'l', 'L', 'l', 'L', 'l', 'l', 'l', 'N',
-            'n', 'N', 'n', 'N', 'n', 'n', 'O', 'o', 'O', 'o', 'O', 'o', 'OE', 'oe', 'R', 'r',
-            'R', 'r', 'R', 'r', 'S', 's', 'S', 's', 'S', 's', 'S', 's', 'T', 't', 'T', 't',
-            'T', 't', 'U', 'u', 'U', 'u', 'U', 'u', 'U', 'u', 'U', 'u', 'U', 'u', 'W', 'w',
-            'Y', 'y', 'Y', 'Z', 'z', 'Z', 'z', 'Z', 'z', 's', 'f', 'O', 'o', 'U', 'u', 'A',
-            'a', 'I', 'i', 'O', 'o', 'U', 'u', 'U', 'u', 'U', 'u', 'U', 'u', 'U', 'u', 'A',
-            'a', 'AE', 'ae', 'O', 'o', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '');
-        $str = str_replace($i, $o, $_str);
-        // Replace more
-        return strtolower(preg_replace(array('/[^a-zA-Z0-9 -_\/]/', '/[ -]+/', '/[ _]+/', '/[ \/]+/', '/^-|-$/'), array('', '-', '_', '/', ''), $str));
-    }
-
-    public function clearInjection($val, $post = false) {
-        if ($post){
-            $val = str_ireplace("SELECT","",$val);
-            $val = str_ireplace("COPY","",$val);
-            $val = str_ireplace("DELETE","",$val);
-            $val = str_ireplace("DROP","",$val);
-            $val = str_ireplace("DUMP","",$val);
-            $val = str_ireplace(" OR ","",$val);
-            $val = str_ireplace("LIKE","",$val);
-        } else {
-            $val = str_ireplace("SELECT","",$val);
-            $val = str_ireplace("COPY","",$val);
-            $val = str_ireplace("DELETE","",$val);
-            $val = str_ireplace("DROP","",$val);
-            $val = str_ireplace("DUMP","",$val);
-            $val = str_ireplace(" OR ","",$val);
-            $val = str_ireplace("%","",$val);
-            $val = str_ireplace("LIKE","",$val);
-            $val = str_ireplace("--","",$val);
-            $val = str_ireplace("^","",$val);
-            $val = str_ireplace("[","",$val);
-            $val = str_ireplace("]","",$val);
-            $val = str_ireplace("\\","",$val);
-            $val = str_ireplace("!","",$val);
-            $val = str_ireplace("¡","",$val);
-            $val = str_ireplace("?","",$val);
-            $val = str_ireplace("=","",$val);
-            $val = str_ireplace("&","",$val);
-        }
-
-        return $val;
-    }
 }
 
 ?>

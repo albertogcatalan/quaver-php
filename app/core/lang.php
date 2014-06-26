@@ -23,32 +23,47 @@ class lang {
 
     public $strings;
     public $table = 'lang';
+    public $table_strings = 'lang_strings';
+
 
     /**
-     * getFromId function.
-     * 
-     * @access public
-     * @param mixed $_id
-     * @return void
+     * @param $_id
+     * @return mixed
      */
     public function getFromId($_id) {
-        $db = new DB;
-        $_id = (int)$_id;
 
-        $item = $db->conn->getArray("SELECT * FROM " . $this->table . " WHERE id = '$_id'");
-        if (@$item) {
-            $this->setItem($item[0]);
-            $this->getStrings();
+        try {
+            $db = new DB;
+            $_id = (int)$_id;
+
+            $item = $db->query("SELECT * FROM " . $this->table . " WHERE id = '$_id'");
+            $result = $item->fetchAll();
+
+            if ($result) {
+                $this->setItem($result[0]);
+            }
+
+            $strings = $db->query("SELECT *
+                FROM " . $this->table_strings . "
+                WHERE language = '" . $this->id . "'");
+
+            foreach ($strings as $string) {
+                if (!isset($this->strings[$string['label']]))
+                    $this->strings[$string['label']] = utf8_encode($string['text']);
+            }
+
+            return $this;
+
+        } catch (PDOException $e) {
+            print "Error!: " . $e->getMessage() . "<br/>";
+            die();
         }
 
-        return $this;
     }
 
+
     /**
-     * getSiteLanguage function.
-     * 
-     * @access public
-     * @return void
+     * @return $this|bool|lang|mixed
      */
     public function getSiteLanguage() {
 
@@ -79,11 +94,9 @@ class lang {
         return substr(@$_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2);
     }
 
+
     /**
-     * getLanguageFromCookie function.
-     * 
-     * @access public
-     * @return void
+     * @return bool|mixed
      */
     public function getLanguageFromCookie() {
         $return = false;
@@ -95,11 +108,9 @@ class lang {
         return $return;
     }
 
+
     /**
-     * getLanguageFromDomain function.
-     * 
-     * @access public
-     * @return void
+     * @return $this
      */
     public function getLanguageFromDomain() {
 
@@ -111,11 +122,9 @@ class lang {
         return $this;
     }
 
+
     /**
-     * redirectTomainDomain function.
-     * 
-     * @access public
-     * @return void
+     *
      */
     public function redirectToMainDomain() {
 
@@ -123,11 +132,9 @@ class lang {
         exit;
     }
 
+
     /**
-     * setCookie function.
-     * 
-     * @access public
-     * @return void
+     *
      */
     public function setCookie() {
 
@@ -141,13 +148,11 @@ class lang {
 
     }
 
+
     /**
-     * getFromSlug function.
-     * 
-     * @access public
-     * @param mixed $_slug
-     * @param bool $_short (default: false)
-     * @return void
+     * @param $_slug
+     * @param bool $_short
+     * @return int|lang
      */
     public function getFromSlug($_slug, $_short = false) {
 
@@ -160,48 +165,44 @@ class lang {
             $slug_where = 'SUBSTR(slug, 1, 2)';
 
         $_slug = substr($_slug, 0, 3);
-        $language = $db->conn->getArray("SELECT id FROM " . $this->table . " WHERE $slug_where = '$_slug' AND active = 'y'");
+        $language = $db->query("SELECT id FROM " . $this->table . " WHERE $slug_where = '$_slug' AND active = 'y'");
         if (@$language) {
-            $this->getFromId($language[0]['id']);
+            $this->getFromId($language->fetchColumn(0));
             $return = $this;
         }
         return $return;
     }
 
+
     /**
-     * getFromTld function.
-     * 
-     * @access public
-     * @param mixed $_tld
-     * @return void
+     * @param $_tld
+     * @return int|lang
      */
     public function getFromTld($_tld) {
         $db = new DB;
 
         $return = LANG;
-        $language = $db->conn->getArray("SELECT id FROM " . $this->table . " WHERE tld = '$_tld'");
+        $language = $db->query("SELECT id FROM " . $this->table . " WHERE tld = '$_tld'");
         if (@$language) {
-            $this->getFromId($language[0]['id']);
+            $this->getFromId($language->fetchColumn(0));
             $return = $this;
         }
 
         return $return;
     }
 
+
     /**
-     * getLanguages function.
-     * 
-     * @access public
-     * @return void
+     * @return array
      */
     public function getLanguages() {
         $db = new DB;
 
         $return = array();
 
-        $items = $db->conn->getArray("SELECT * FROM " . $this->table . " ORDER BY id ASC");
+        $items = $db->query("SELECT * FROM " . $this->table . " ORDER BY id ASC");
 
-        foreach ($items as $l) {
+        foreach ($items->fetchAll() as $l) {
             $ob_lang = new lang;
             $return[] = $ob_lang->getFromId($l['id']);
         }
@@ -209,18 +210,17 @@ class lang {
         return $return;
     }
 
+
     /**
-     * getList function.
-     * 
-     * @access public
-     * @param bool $_all (default: false)
-     * @param bool $_byPriority (default: false)
-     * @return void
+     * @param bool $_all
+     * @param bool $_byPriority
+     * @return array
      */
     public function getList($_all = false, $_byPriority = false) {
         $db = new DB;
 
         $return = array();
+        $result = null;
 
         $where = '';
         $order = '';
@@ -231,57 +231,28 @@ class lang {
         if ($_all)
             $where = "WHERE active = 'y'";
 
-        $items = $db->conn->getArray("SELECT id FROM " . $this->table . " $where $order");
+        $items = $db->query("SELECT id FROM " . $this->table . " $where $order");
         
-        if (@$items)
-            foreach ($items as $item) {
+        if (@$items){
+            $result = $items->fetchAll();
+            foreach ($result as $item) {
                 $ob_lang = new lang;
                 $return[] = $ob_lang->getFromId($item['id']);
             }
+        }
+
 
         return @$return;
     }
 
-    /**
-     * getString function.
-     * 
-     * @access public
-     * @param mixed $_label
-     * @return void
-     */
-    public function getString($_label) {
-        $db = new DB;
 
-        if (!isset($this->strings[$_label])) {
-            $text = $db->conn->getResult("SELECT text
-            FROM " . $this->table_strings . "
-            WHERE language = '" . $this->id . "'
-                AND label = '$_label'");
-            if (empty($text)) {
-                $this->strings[$_label] = $text;
-            } else {
-                $this->strings[$_label] = "#$_label#";
 
-                $languages = $this->getLanguages();
-                foreach ($languages as $l) {
-                    $item['language'] = $l->id;
-                    $item['label'] = $_label;
-                    $item['text'] = $this->strings[$_label];
-                    $db->conn->insert($item, $this->table_strings);
-                }
-            }
-        }
 
-        return $this->strings[$_label];
-    }
 
     /**
-     * _ function.
-     * 
-     * @access public
-     * @param mixed $_label
-     * @param string $_utf8 (default: '')
-     * @return void
+     * @param $_label
+     * @param string $_utf8
+     * @return string
      */
     public function _($_label, $_utf8 = '') {
 
@@ -301,42 +272,18 @@ class lang {
         return $return;
     }
 
+
     /**
-     * l function.
-     * 
-     * @access public
-     * @param mixed $_label
-     * @return void
+     * @param $_label
+     * @return string
      */
     public function l($_label) {
         return $this->_($_label, '');
     }
 
-    /**
-     * getStrings function.
-     * 
-     * @access public
-     * @return void
-     */
-    public function getStrings() {
-        $db = new DB;
-
-        $strings = $db->conn->getArray("SELECT *
-            FROM " . $this->table_strings . "
-            WHERE language = '" . $this->id . "'");
-
-        foreach ($strings as $string) {
-            if (!isset($this->strings[$string['label']]))
-                $this->strings[$string['label']] = utf8_encode($string['text']);
-        }
-    }
 
     /**
-     * setItem function.
-     *
-     * @access public
-     * @param mixed $_item
-     * @return void
+     * @param $_item
      */
     public function setItem($_item) {
         foreach ($this->_fields as $field) {
@@ -345,11 +292,9 @@ class lang {
         }
     }
 
+
     /**
-     * getItem function.
-     *
-     * @access public
-     * @return void
+     * @return array
      */
     public function getItem() {
         $item = array();
@@ -359,45 +304,59 @@ class lang {
         return $item;
     }
 
+
     /**
-     * delete function.
-     *
-     * @access public
-     * @return void
+     * @return bool
+     */
+    public function save() {
+
+        try {
+
+            $db = new DB;
+
+            $set = '';
+            $values = array();
+
+            foreach ($this->_fields as $field) {
+                if ($set != '') $set .= ', ';
+                $set .= "$field = :$field";
+                $values[":$field"] = $this->$field;
+            }
+
+            if(empty($this->id)){
+                $sql = "INSERT INTO " . $this->table . " SET " . $set;
+
+            } else {
+                $values[':id'] = $this->id;
+                $sql = "UPDATE " . $this->table . " SET " . $set . " WHERE id = :id";
+            }
+
+            $db->query($sql, $values);
+
+            return true;
+
+        } catch (PDOException $e) {
+            print "Error!: " . $e->getMessage() . "<br/>";
+            die();
+        }
+
+
+    }
+
+    /**
+     * @return bool
      */
     public function delete() {
         $db = new DB;
 
-        $return = false;
+        $_id = (int)$this->id;
 
-        if (!empty($this->id)) {
-            $return = $db->conn->delete($this->id, $this->table);
-        }
-
-        return $return;
-    }
-
-    /**
-     * save function.
-     *
-     * @access public
-     * @return void
-     */
-    public function save() {
-        $db = new DB;
-
-        $item = $this->getItem();
-
-        if (!empty($this->id)) {
-            // UPDATE
-            $return = $db->conn->update($item, $this->table, "id = '" . $this->id . "'");
+        $sql = "DELETE FROM " . $this->table . " WHERE id = :id";
+        if ($db->query($sql, array(':id'=>$_id))) {
+            return true;
         } else {
-            // INSERT
-            $return = $db->conn->insert($item, $this->table);
-            $this->id = $db->conn->getLastId();
-            $this->getFromId($this->id);
+            return false;
         }
-        return $return;
     }
 
 }

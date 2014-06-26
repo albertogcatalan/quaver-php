@@ -11,7 +11,7 @@
  */
 class core {
 
-    public $conn; //DB object
+    public $db; //DB object
 
 	// URL management
     public $url_var;
@@ -35,8 +35,7 @@ class core {
     public function __construct() {
 
         // Create new DB object
-        $ob_DB = new DB;
-        $this->conn = $ob_DB->conn;
+        $this->db = new DB;
 
 
         // Twig Template System Loader
@@ -81,36 +80,17 @@ class core {
             exit;
         }
 
-        // Restoring user session
-        if (!empty($this->queryString['PHPSESSID'])) {
-            $sessionHash = $this->cleanString($this->queryString['PHPSESSID']);
-            $ob_u = new User;
-            $ob_u->setCookie($sessionHash);
-            $url = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-            header("Location: $url");
-            exit;
-        }
-
 
     }
 
+
     /**
-     * start function.
-     * 
-     * @access public
-     * @param bool $_mvc (default: true)
-     * @return void
+     * @param bool $_mvc
      */
     public function start($_mvc = true) {
     	
-        global $_user, $_lang;
-    	
-        // Check user login
-        $_user = new user;
-        if (!empty($_COOKIE[COOKIE_NAME . "_log"])) {
-            $_user->getFromCookie($_COOKIE[COOKIE_NAME . "_log"]);
-        }
-		
+        global $_lang;
+
         // Load language
         $_lang = new lang;
         if (!empty($_GET['lang'])) {
@@ -128,7 +108,10 @@ class core {
     /*
      * Global functions
      */
-     
+
+    /**
+     * @param $_url
+     */
     public function fixTrailingSlash($_url) {
 
         if ($_url{strlen($_url) - 1} != '/' && strstr($_url, "image/") === false) {
@@ -137,13 +120,20 @@ class core {
         }
     }
 
+    /**
+     * @param $_id
+     * @return mixed
+     */
     public function getUrlFromId($_id) {
         $_id = (int)$_id;
-        $url = $this->conn->getResult("SELECT url FROM url WHERE id = '$_id'");
+        $url = $this->db->query("SELECT url FROM url WHERE id = '$_id'");
         $regex = "/(\(.*\))/";
-        return preg_replace($regex, "", $url);
+        return preg_replace($regex, "", $url->fetchColumn(0));
     }
 
+    /**
+     *
+     */
     public function loadMVC()
     {
         $url = $this->getUrl();
@@ -156,19 +146,13 @@ class core {
         }
     }
 
+
     /**
-     * loadController function.
-     *
-     * @access public
-     * @param mixed $_controllerName
-     * @return void
+     * @param $_controllerName
      */
     public function loadController($_controllerName) {
-        global $_user, $_lang;
 
         $controllerPath = GLOBAL_PATH . "/controller/" . $_controllerName . ".php";
-
-        //echo $controllerPath;
 
         $this->getGlobalTwigVars();
 
@@ -182,7 +166,9 @@ class core {
     }
 
 
-
+    /**
+     *
+     */
     public function getQueryString() {
         $uri = $_SERVER['REQUEST_URI'];
         $qs = parse_url($uri, PHP_URL_QUERY);
@@ -192,10 +178,17 @@ class core {
     }
 
     // Get controller template
+    /**
+     * @param $_url
+     * @return mixed
+     */
     public function getVT($_url) {
-        $mvc_items = $this->conn->getArray("SELECT * FROM url WHERE enabled = 'y'");
+        $result = null;
 
-        foreach ($mvc_items as $item) {
+        $mvc_items = $this->db->query("SELECT * FROM url WHERE enabled = 'y'");
+        $result = $mvc_items->fetchAll();
+
+        foreach ($result as $item) {
             $regexp = "/^" . str_replace(array("/", "\\\\"), array("\/", "\\"), $item['url']) . "$/";
             preg_match($regexp, $_url, $match);
 
@@ -210,12 +203,14 @@ class core {
             $return = $mvc;
         } else {
             $this->loadController('404');
-            exit;
             die('error 404');
         }
         return $return;
     }
 
+    /**
+     * @return string
+     */
     public function getUrl() {
         $url = $_SERVER['REQUEST_URI'];
         if (strstr($url, "?") !== false)
@@ -227,9 +222,12 @@ class core {
     * Templates
     */
 
-   
+
+    /**
+     *
+     */
     public function getGlobalTwigVars() {
-        global $_lang, $_user;
+        global $_lang;
 
         // Language
         $this->addTwigVars("language", $_lang);
@@ -243,8 +241,6 @@ class core {
         $languageVars = array();
         $ob_l = new lang;
         foreach ($ob_l->getList() as $lang) {
-            $tld_k = @array_keys(unserialize(LANG_TLD));
-            $tld = $tld_k[$lang->id];
             $item = array(
                 "id" => $lang->id,
                 "domain" => HTTP_MODE . "www." . DOMAIN_NAME . $lang->tld,
@@ -260,32 +256,6 @@ class core {
 
         $this->addTwigVars('actual_url', strip_tags($this->url_var[0]));
 
-        // User
-        $userVars = array(
-            "name" => $_user->name,
-            "avatar" => $_user->avatar,
-            "admin" => $_user->isAdmin(),
-            "logged" => $_user->logged,
-            "sessionHash" => $_user->cookie
-        );
-        
-        $this->addTwigVars("user", $userVars);
-        $this->addTwigVars("_user", $_user);
-
-        // Login
-        if (@isset($this->queryString['login-error']))
-            $this->addTwigVars('loginError', true);
-
-        if (@isset($this->queryString['user-disabled']))
-            $this->addTwigVars('userDisabled', true);
-
-        // Discharge
-        if (@isset($this->queryString['account-disabled']))
-            $this->addTwigVars('accountDisabled', true);
-
-        if (@isset($this->queryString['account-deleted']))
-            $this->addTwigVars('accountDeleted', true);
-
         // Config
         $config = array(
             "baseHref" => HTTP_MODE . DOMAIN_NAME,
@@ -297,39 +267,12 @@ class core {
 
     }
 
+    /**
+     * @param $_key
+     * @param $_array
+     */
     public function addTwigVars($_key, $_array) {
         $this->twigVars[$_key] = $_array;
-    }
-
-
-   
-   /*
-    * Test & Debug
-    */
-
-    private function insertLogItem($_item) {
-        $this->log[] = $_item;
-    }
-
-    public function log($_msg, $_type = "message", $_warn = 0) {
-
-        if ($this->debug) {
-            $item = array();
-            $item['type'] = $_type;
-            $item['message'] = $_msg;
-            $item['warning'] = $_warn;
-            $this->insertLogItem($item);
-        }
-    }
-
-    public function showLog() {
-        $this->debug = true;
-        $this->conn->debug = true;
-        $this->log("Debug enabled!");
-        if ($this->debug) {
-            echo '<pre>';
-            print_r($this->log);
-        }
     }
 
 

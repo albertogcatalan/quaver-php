@@ -54,11 +54,6 @@ spl_autoload_register(
 $core = new core;
 $core->start();
 
-if (defined(DEV_MODE) && DEV_MODE === true) {
-    $core->showLog();
-    $core->conn->showDebug(1,1);
-}
-
 if (defined(MAINTENANCE_MODE) && MAINTENANCE_MODE === true && $_SERVER['REQUEST_URI'] != '/maintenance') {
     header('Location: /maintenance');
     exit;
