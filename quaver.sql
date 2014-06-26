@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Servidor: localhost:8889
--- Tiempo de generación: 24-06-2014 a las 16:39:13
+-- Tiempo de generación: 26-06-2014 a las 17:45:50
 -- Versión del servidor: 5.5.34
 -- Versión de PHP: 5.5.10
 
@@ -19,8 +19,6 @@ SET time_zone = "+00:00";
 --
 -- Base de datos: `quaver`
 --
-CREATE DATABASE IF NOT EXISTS `quaver` DEFAULT CHARACTER SET latin1 COLLATE latin1_swedish_ci;
-USE `quaver`;
 
 -- --------------------------------------------------------
 
@@ -46,7 +44,7 @@ CREATE TABLE `lang` (
 --
 
 INSERT INTO `lang` (`id`, `name`, `slug`, `tld`, `locale`, `customerLanguage`, `active`, `priority`) VALUES
-(1, 'English', 'eng', '.co.uk', 'en_US', '001', 'y', 1),
+(1, 'English', 'eng', '.com', 'en_US', '001', 'y', 1),
 (2, 'Español', 'esp', '.es', 'es_ES', '002', 'y', 2);
 
 -- --------------------------------------------------------
@@ -62,7 +60,15 @@ CREATE TABLE `lang_strings` (
   `label` varchar(64) NOT NULL DEFAULT '',
   `text` text NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=3 ;
+
+--
+-- Volcado de datos para la tabla `lang_strings`
+--
+
+INSERT INTO `lang_strings` (`id`, `language`, `label`, `text`) VALUES
+(1, 1, 'hello_world', 'Hello world!'),
+(2, 2, 'hello_world', '¡Hola mundo!');
 
 -- --------------------------------------------------------
 
@@ -90,32 +96,6 @@ INSERT INTO `url` (`id`, `url`, `controller`, `enabled`) VALUES
 (4, '/login/', 'login', 'y'),
 (5, '/logout/', 'logout', 'y'),
 (6, '/register/', 'register', 'y');
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `user`
---
-
-DROP TABLE IF EXISTS `user`;
-CREATE TABLE `user` (
-  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `active` varchar(1) NOT NULL DEFAULT 'y',
-  `level` varchar(8) NOT NULL DEFAULT 'user',
-  `email` varchar(255) NOT NULL DEFAULT '',
-  `password` varchar(40) NOT NULL DEFAULT '',
-  `salt` varchar(8) NOT NULL DEFAULT '',
-  `name` varchar(255) NOT NULL DEFAULT '',
-  `surname` varchar(255) NOT NULL DEFAULT '',
-  `avatar` varchar(255) DEFAULT NULL,
-  `timezone` varchar(32) NOT NULL DEFAULT '',
-  `biography` text,
-  `registered` int(11) NOT NULL,
-  `last_login` int(11) NOT NULL,
-  `last_activity` int(11) NOT NULL,
-  `language` int(11) NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
