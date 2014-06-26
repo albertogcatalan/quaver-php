@@ -1,9 +1,9 @@
 Quaver PHP
 ==========
 
-The PHP Framework to deploy web platforms. Quaver is distributed under MIT license.
+Mini PHP Framework to deploy web platforms. Quaver is distributed under MIT license.
 
-Current version 0.1.1
+Current version 0.2
 
 External Lib
 ------------
