@@ -165,7 +165,7 @@ class lang {
             $slug_where = 'SUBSTR(slug, 1, 2)';
 
         $_slug = substr($_slug, 0, 3);
-        $language = $db->query("SELECT id FROM " . $this->table . " WHERE $slug_where = '$_slug' AND active = 'y'");
+        $language = $db->query("SELECT id FROM " . $this->table . " WHERE $slug_where = '$_slug' AND active = 1");
         if (@$language) {
             $this->getFromId($language->fetchColumn(0));
             $return = $this;
@@ -229,7 +229,7 @@ class lang {
             $order = 'ORDER BY priority ASC';
 
         if ($_all)
-            $where = "WHERE active = 'y'";
+            $where = "WHERE active = 1";
 
         $items = $db->query("SELECT id FROM " . $this->table . " $where $order");
         

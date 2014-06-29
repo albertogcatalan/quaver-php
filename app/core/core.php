@@ -37,7 +37,6 @@ class core {
         // Create new DB object
         $this->db = new DB;
 
-
         // Twig Template System Loader
         require_once(LIB_PATH . '/Twig/Autoloader.php');
         Twig_Autoloader::register();
@@ -185,7 +184,7 @@ class core {
     public function getVT($_url) {
         $result = null;
 
-        $mvc_items = $this->db->query("SELECT * FROM url WHERE enabled = 'y'");
+        $mvc_items = $this->db->query("SELECT * FROM url WHERE enabled = 1");
         $result = $mvc_items->fetchAll();
 
         foreach ($result as $item) {
