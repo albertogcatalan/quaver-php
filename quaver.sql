@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Servidor: localhost:8889
--- Tiempo de generación: 26-06-2014 a las 17:45:50
+-- Tiempo de generación: 29-06-2014 a las 12:45:54
 -- Versión del servidor: 5.5.34
 -- Versión de PHP: 5.5.10
 
@@ -34,18 +34,19 @@ CREATE TABLE `lang` (
   `tld` varchar(8) DEFAULT NULL,
   `locale` varchar(5) NOT NULL DEFAULT '',
   `customerLanguage` varchar(3) NOT NULL DEFAULT '',
-  `active` varchar(1) NOT NULL DEFAULT 'y',
+  `active` tinyint(1) NOT NULL,
   `priority` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=7 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=8 ;
 
 --
 -- Volcado de datos para la tabla `lang`
 --
 
 INSERT INTO `lang` (`id`, `name`, `slug`, `tld`, `locale`, `customerLanguage`, `active`, `priority`) VALUES
-(1, 'English', 'eng', '.com', 'en_US', '001', 'y', 1),
-(2, 'Español', 'esp', '.es', 'es_ES', '002', 'y', 2);
+(1, 'wdw', 'eng', '.com', 'a', '001', 1, 1),
+(2, 'Español', 'esp', '.es', 'es_ES', '002', 1, 2),
+(7, 'aaa', 'a', 'a', 'aa', '003', 1, 1);
 
 -- --------------------------------------------------------
 
@@ -67,8 +68,8 @@ CREATE TABLE `lang_strings` (
 --
 
 INSERT INTO `lang_strings` (`id`, `language`, `label`, `text`) VALUES
-(1, 1, 'hello_world', 'Hello world!'),
-(2, 2, 'hello_world', '¡Hola mundo!');
+(1, 1, 'hello_world', 'Hello world'),
+(2, 2, 'hello_world', 'Hola mundo');
 
 -- --------------------------------------------------------
 
@@ -81,7 +82,7 @@ CREATE TABLE `url` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `url` varchar(255) NOT NULL DEFAULT '',
   `controller` varchar(64) DEFAULT '',
-  `enabled` varchar(1) NOT NULL DEFAULT 'y',
+  `enabled` tinyint(1) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `url` (`url`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=118 ;
@@ -91,11 +92,11 @@ CREATE TABLE `url` (
 --
 
 INSERT INTO `url` (`id`, `url`, `controller`, `enabled`) VALUES
-(1, '/', 'home', 'y'),
-(2, '/404/', '404', 'y'),
-(4, '/login/', 'login', 'y'),
-(5, '/logout/', 'logout', 'y'),
-(6, '/register/', 'register', 'y');
+(1, '/', 'home', 1),
+(2, '/404/', '404', 1),
+(4, '/login/', 'login', 1),
+(5, '/logout/', 'logout', 1),
+(6, '/register/', 'register', 1);
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
