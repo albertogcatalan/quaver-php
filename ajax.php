@@ -8,21 +8,22 @@
 ini_set('display_errors','off');
 error_reporting(E_ERROR);
 
-if ( !file_exists("./config.php") ) {
+if ( !file_exists("../config.php") ) {
 
-    $msg = "This instance of app doesn't seem to be configured, please read the deployment guide, configure and try again.";
+	$msg = "This instance of app doesn't seem to be configured, please read the deployment guide, configure and try again.";
     error_log($msg);
     echo "<h1>{$msg}</h1>";
     die;
-    
+	
 }
 
 // Set main objects
-require_once("./config.php");
-define('P_PATH', ''); //AJAX
-require_once("./app/core/db.php");
-require_once("./app/core/lang.php");
-require_once("./app/core/core.php");
+require_once("../config.php");
+define('P_PATH', '../'); //AJAX
+require_once("../app/core/db.php");
+require_once("../app/core/lang.php");
+require_once("../app/core/core.php");
+
 
 if (defined(MAINTENANCE_MODE) && MAINTENANCE_MODE === true && $_SERVER['REQUEST_URI'] != '/maintenance') {
     header('Location: /maintenance');
@@ -56,6 +57,6 @@ spl_autoload_register(
 );
 
 $core = new core;
-$core->start();
+$core->start(false);
 
 ?>

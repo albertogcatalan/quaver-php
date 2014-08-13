@@ -6,7 +6,6 @@
  */
 
 // Paths
-define('P_PATH', '');
 define('GLOBAL_PATH', dirname( __FILE__ ));
 define('MODEL_PATH', GLOBAL_PATH . '/app/model');
 define('LIB_PATH', GLOBAL_PATH . '/app/lib');
@@ -52,14 +51,11 @@ define('LANG_TLD', serialize(array(
 )));
 
 // Database configuration
-define('DB_PREFIX', 'qv_');
+define('DB_PREFIX', 'qv_'); #Disabled
 define('DB_HOSTNAME',  'localhost');
 define('DB_USERNAME', 'root');
 define('DB_PASSWORD', 'root');
 define('DB_DATABASE', 'quaver');
-
-// Upload care KEY (CKeditor)
-define('UPLOADCARE',  '');
 
 
 /*

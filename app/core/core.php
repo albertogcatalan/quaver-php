@@ -37,12 +37,15 @@ class core {
         // Create new DB object
         $this->db = new DB;
 
+
         // Twig Template System Loader
         require_once(LIB_PATH . '/Twig/Autoloader.php');
         Twig_Autoloader::register();
 
+
         // Getting all directories in /template
         $path = P_PATH . 'template';
+
         $templatesDir = array($path);
         $dirsToScan = array($path);
 
@@ -63,8 +66,8 @@ class core {
 
 		//get query string from URL to core var
         $this->getQueryString();
-
         $loader = new Twig_Loader_Filesystem($templatesDir);
+
         $twig_options = array();
         if (defined(TEMPLATE_CACHE) && TEMPLATE_CACHE) $twig_options['cache'] = "./template/cache";
         if (defined(CACHE_AUTO_RELOAD) && CACHE_AUTO_RELOAD) $twig_options['auto_reload'] = true;
@@ -79,6 +82,9 @@ class core {
             exit;
         }
 
+        # Restoring user session
+        
+
 
     }
 
@@ -88,7 +94,10 @@ class core {
      */
     public function start($_mvc = true) {
     	
-        global $_lang;
+        global $_lang, $_user;
+        
+        # Check user login
+        
 
         // Load language
         $_lang = new lang;
@@ -99,7 +108,8 @@ class core {
         } else {
             $_lang->getSiteLanguage();
         }
-        
+        $this->language = $_lang->id;
+
         // Assoc URL to MVC
         if ($_mvc) $this->loadMVC();
     }
@@ -151,6 +161,8 @@ class core {
      */
     public function loadController($_controllerName) {
 
+        global $_user, $_lang;
+        
         $controllerPath = GLOBAL_PATH . "/controller/" . $_controllerName . ".php";
 
         $this->getGlobalTwigVars();
@@ -202,7 +214,7 @@ class core {
             $return = $mvc;
         } else {
             $this->loadController('404');
-            die('error 404');
+            //die('error 404');
         }
         return $return;
     }
@@ -226,15 +238,13 @@ class core {
      *
      */
     public function getGlobalTwigVars() {
-        global $_lang;
+        global $_user, $_lang;
 
         // Language
         $this->addTwigVars("language", $_lang);
 
         // Environment
-        if (defined(DEV_MODE) && DEV_MODE === true){
-            $this->addTwigVars("_env", true);
-        }
+        $this->addTwigVars("_env", DEV_MODE);
 
         // Languages
         $languageVars = array();
