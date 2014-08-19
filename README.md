@@ -1,9 +1,8 @@
 Quaver PHP
 ==========
+This project has been continued by [MilloLab](https://github.com/MilloLab/quaver)
 
-Mini PHP Framework to deploy web platforms. Quaver is distributed under MIT license.
-
-Current version 0.2.1
+Quaver is distributed under MIT license.
 
 External Lib
 ------------
@@ -12,8 +11,3 @@ External Lib
 Install
 -------
 Import quaver.sql and check config.php
-
-
-Documentation
--------------
-Coming soon...
